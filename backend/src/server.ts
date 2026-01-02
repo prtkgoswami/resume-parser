@@ -5,6 +5,7 @@ import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import mammoth from "mammoth";
 import { detectLigatures } from "./ligature";
 import { detectTokenIssues, buildSuggestions } from "./tokenIntegrity";
+import { calculateAtsScore } from "./atsScore";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -68,6 +69,7 @@ export function createServer() {
       const issues = detectLigatures(text);
       const tokenIssues = detectTokenIssues(text);
       const suggestions = buildSuggestions(issues, tokenIssues);
+      const atsScore = calculateAtsScore(issues, tokenIssues);
 
       return res.json({
         filename: req.file.originalname,
@@ -75,6 +77,7 @@ export function createServer() {
         issues,
         tokenIssues,
         suggestions,
+        atsScore,
       });
     } catch (err) {
       console.error(err);

@@ -24,12 +24,23 @@ type AtsSuggestion = {
   severity: "low" | "medium" | "high";
 };
 
+type AtsScore = {
+  score: number;
+  label: string;
+  breakdown: {
+    highSeverityIssues: number;
+    mediumSeverityIssues: number;
+    lowSeverityIssues: number;
+  };
+};
+
 function App() {
   const [file, setFile] = useState<File | null>(null);
   const [rawText, setRawText] = useState<string>("");
   const [issues, setIssues] = useState<Issue[]>([]);
   const [tokenIssues, setTokenIssues] = useState<TokenIssue[]>([]);
   const [suggestions, setSuggestions] = useState<AtsSuggestion[]>([]);
+  const [atsScore, setAtsScore] = useState<AtsScore | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -42,6 +53,7 @@ function App() {
     setIssues([]);
     setTokenIssues([]);
     setSuggestions([]);
+    setAtsScore(null);
 
     const formData = new FormData();
     formData.append("resume", file);
@@ -61,6 +73,7 @@ function App() {
       setIssues(data.issues || []);
       setTokenIssues(data.tokenIssues || []);
       setSuggestions(data.suggestions || []);
+      setAtsScore(data.atsScore || null);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -111,6 +124,21 @@ function App() {
         </button>
 
         {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+
+        {atsScore && (
+          <div className="mt-4 p-4 rounded border bg-gray-50">
+            <div className="text-lg font-semibold">
+              ATS Compatibility Score:{" "}
+              <span className="font-bold">{atsScore.score}/100</span>
+            </div>
+            <div className="text-sm text-gray-700">{atsScore.label}</div>
+            <div className="mt-2 text-xs text-gray-600">
+              High: {atsScore.breakdown.highSeverityIssues} · Medium:{" "}
+              {atsScore.breakdown.mediumSeverityIssues} · Low:{" "}
+              {atsScore.breakdown.lowSeverityIssues}
+            </div>
+          </div>
+        )}
 
         {rawText && (
           <pre className="mt-6 text-xs bg-gray-100 p-4 rounded max-h-125 overflow-auto whitespace-pre-wrap">
