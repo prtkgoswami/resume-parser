@@ -1,9 +1,16 @@
 import {createServer} from './server'
+import cors from "cors";
 
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 
 const app = createServer();
 
+app.use(
+  cors({
+    origin: "*", 
+  })
+);
+
 app.listen(PORT, () => {
-  console.log(`Backend running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
