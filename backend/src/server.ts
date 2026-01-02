@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import multer from "multer";
+import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+import mammoth from "mammoth";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -28,18 +30,49 @@ export function createServer() {
     res.json({ status: "ok" });
   });
 
-  // Upload endpoint (no parsing yet)
-  app.post("/upload", upload.single("resume"), (req, res) => {
+  app.post("/parse", upload.single("resume"), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    return res.json({
-      filename: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
-      message: "File uploaded successfully",
-    });
+    try {
+      let text = "";
+
+      if (req.file.mimetype === "application/pdf") {
+        const uint8Array = new Uint8Array(req.file.buffer);
+
+        const pdf = await pdfjs.getDocument({
+          data: uint8Array,
+        }).promise;
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          text += content.items.map((item: any) => item.str).join(" ");
+          text += "\n";
+        }
+      }
+
+      if (
+        req.file.mimetype ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ) {
+        const result = await mammoth.extractRawText({
+          buffer: req.file.buffer,
+        });
+        text = result.value;
+      }
+
+      return res.json({
+        filename: req.file.originalname,
+        rawText: text,
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        error: "Failed to parse resume",
+      });
+    }
   });
 
   return app;
