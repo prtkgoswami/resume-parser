@@ -1,8 +1,17 @@
 import { useState } from "react";
 
+type Issue = {
+  index: number;
+  char: string;
+  description: string;
+  codePoint: string;
+  severity: "low" | "medium" | "high";
+};
+
 function App() {
-   const [file, setFile] = useState<File | null>(null);
-  const [rawText, setRawText] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [rawText, setRawText] = useState<string>("");
+  const [issues, setIssues] = useState<Issue[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -11,7 +20,8 @@ function App() {
 
     setLoading(true);
     setError(null);
-    setRawText(null);
+    setRawText("");
+    setIssues([]);
 
     const formData = new FormData();
     formData.append("resume", file);
@@ -28,6 +38,7 @@ function App() {
 
       const data = await res.json();
       setRawText(data.rawText);
+      setIssues(data.issues || []);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -35,13 +46,32 @@ function App() {
     }
   };
 
+  const highlightedText = rawText.split("").map((char, idx) => {
+    const issue = issues.find((i) => i.index === idx);
+    if (!issue) return <span key={idx}>{char}</span>;
+
+    const color =
+      issue.severity === "high"
+        ? "bg-red-300 text-red-900"
+        : issue.severity === "medium"
+        ? "bg-orange-200 text-orange-800"
+        : "bg-yellow-200 text-yellow-800";
+
+    return (
+      <span
+        key={idx}
+        title={`${issue.description} (${issue.codePoint})`}
+        className={`${color} font-semibold`}
+      >
+        {char}
+      </span>
+    );
+  });
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="bg-white p-6 rounded shadow w-full max-w-md">
-        <h1 className="text-xl font-semibold mb-4">
-          ATS Resume Parser
-        </h1>
+        <h1 className="text-xl font-semibold mb-4">ATS Resume Parser</h1>
 
         <input
           type="file"
@@ -58,13 +88,22 @@ function App() {
           {loading ? "Uploading..." : "Upload Resume"}
         </button>
 
-        {error && (
-          <p className="mt-4 text-sm text-red-600">{error}</p>
+        {issues.some((i) => i.severity === "high") && (
+          <div className="mt-4 text-sm text-red-700 font-medium">
+            🚨 Critical ATS issues detected (URLs or keywords may be broken)
+          </div>
         )}
+        {issues.length > 0 && (
+          <div className="mt-4 text-sm text-red-700">
+            ⚠️ {issues.length} potential ATS-breaking character(s) detected
+          </div>
+        )}
+
+        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
         {rawText && (
           <pre className="mt-6 text-xs bg-gray-100 p-4 rounded max-h-125 overflow-auto whitespace-pre-wrap">
-            {rawText}
+            {highlightedText}
           </pre>
         )}
       </div>
