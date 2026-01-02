@@ -30,7 +30,7 @@ const Accordion = ({ title, isOpen, onToggle, children }: AccordionProps) => {
         }`}
         role="region"
       >
-        <div className="overflow-hidden px-3 py-2">{children}</div>
+        <div className="overflow-hidden px-3 py-3 md:py-2">{children}</div>
       </div>
     </div>
   );
