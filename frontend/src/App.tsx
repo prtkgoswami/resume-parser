@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { formatAtsText } from "./formatAtsText";
+import Accordion from "./Accordion";
 
 type Issue = {
   index: number;
@@ -36,6 +38,7 @@ type AtsScore = {
 
 function App() {
   const [file, setFile] = useState<File | null>(null);
+  const [viewMode, setViewMode] = useState<"raw" | "formatted">("formatted");
   const [rawText, setRawText] = useState<string>("");
   const [issues, setIssues] = useState<Issue[]>([]);
   const [tokenIssues, setTokenIssues] = useState<TokenIssue[]>([]);
@@ -43,6 +46,8 @@ function App() {
   const [atsScore, setAtsScore] = useState<AtsScore | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showTokenIssues, setShowTokenIssues] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const onSubmit = async () => {
     if (!file) return;
@@ -105,28 +110,53 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-3">
-      <div className="bg-white p-6 rounded shadow w-full max-w-[80%]">
-        <h1 className="text-xl font-semibold mb-4">ATS Resume Parser</h1>
+      <main
+        className="bg-white p-6 rounded shadow w-full max-w-[80%]"
+        aria-labelledby="app-title"
+      >
+        <h1 id="app-title" className="text-xl font-semibold mb-4">
+          ATS Resume Parser
+        </h1>
 
+        <label
+          htmlFor="resume-upload"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Upload resume (PDF or DOCX)
+        </label>
         <input
+          id="resume-upload"
           type="file"
           accept=".pdf,.docx"
           onChange={(e) => setFile(e.target.files?.[0] || null)}
           className="mb-4 border border-gray-300 px-2 py-1 cursor-pointer w-full"
         />
+        <p id="resume-upload-hint" className="sr-only">
+          Accepted formats are PDF and DOCX
+        </p>
 
         <button
           onClick={onSubmit}
           disabled={!file || loading}
+          aria-disabled={!file || loading}
+          aria-busy={loading}
           className="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50 cursor-pointer"
         >
           {loading ? "Uploading..." : "Upload Resume"}
         </button>
 
-        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+        {error && (
+          <p className="mt-4 text-sm text-red-600" role="alert">
+            {error}
+          </p>
+        )}
 
         {atsScore && (
-          <div className="mt-4 p-4 rounded border bg-gray-50">
+          <div
+            className="mt-4 p-4 rounded border bg-gray-50"
+            role="status"
+            aria-live="polite"
+          >
             <div className="text-lg font-semibold">
               ATS Compatibility Score:{" "}
               <span className="font-bold">{atsScore.score}/100</span>
@@ -138,12 +168,6 @@ function App() {
               {atsScore.breakdown.lowSeverityIssues}
             </div>
           </div>
-        )}
-
-        {rawText && (
-          <pre className="mt-6 text-xs bg-gray-100 p-4 rounded max-h-125 overflow-auto whitespace-pre-wrap">
-            {highlightedText}
-          </pre>
         )}
 
         {issues.some((i) => i.severity === "high") && (
@@ -158,12 +182,83 @@ function App() {
           </div>
         )}
 
-        {tokenIssues.length > 0 && (
-          <div className="mt-6">
-            <h2 className="text-sm font-semibold mb-2">
-              ⚠️ Token Integrity Issues
-            </h2>
+        {rawText && (
+          <div
+            className="flex gap-2 mt-4"
+            role="tablist"
+            aria-label="ATS text view mode"
+          >
+            <button
+              role="tab"
+              aria-selected={viewMode === "formatted"}
+              onClick={() => setViewMode("formatted")}
+              className={`px-3 py-1 text-sm rounded border ${
+                viewMode === "formatted" ? "bg-blue-600 text-white" : "bg-white"
+              }`}
+            >
+              Formatted ATS View
+            </button>
 
+            <button
+              role="tab"
+              aria-selected={viewMode === "raw"}
+              onClick={() => setViewMode("raw")}
+              className={`px-3 py-1 text-sm rounded border ${
+                viewMode === "raw" ? "bg-blue-600 text-white" : "bg-white"
+              }`}
+            >
+              Raw ATS Text
+            </button>
+          </div>
+        )}
+
+        {rawText && viewMode === "raw" && (
+          <pre
+            className="mt-4 text-xs bg-gray-100 p-4 rounded max-h-125 overflow-auto whitespace-pre-wrap"
+            aria-label="Raw ATS extracted text"
+          >
+            {highlightedText}
+          </pre>
+        )}
+
+        {rawText && viewMode === "formatted" && (
+          <div className="mt-4 space-y-3 text-sm bg-gray-100 p-4 rounded">
+            {formatAtsText(rawText).map((block, i) => {
+              if (block.type === "section") {
+                return (
+                  <h2
+                    key={i}
+                    className="mt-6 mb-2 font-semibold text-gray-800 uppercase border-b pb-1"
+                  >
+                    {block.text}
+                  </h2>
+                );
+              }
+
+              if (block.type === "bullet") {
+                return (
+                  <div key={i} className="pl-4 flex gap-2">
+                    <span>•</span>
+                    <span>{block.text}</span>
+                  </div>
+                );
+              }
+
+              return (
+                <p key={i} className="text-gray-700">
+                  {block.text}
+                </p>
+              );
+            })}
+          </div>
+        )}
+
+        {tokenIssues.length > 0 && (
+          <Accordion
+            title={`⚠️ Token Integrity Issues (${tokenIssues.length})`}
+            isOpen={showTokenIssues}
+            onToggle={() => setShowTokenIssues((v) => !v)}
+          >
             <ul className="text-xs space-y-2">
               {tokenIssues.map((issue, i) => (
                 <li key={i} className="border rounded p-2 bg-gray-50">
@@ -179,15 +274,15 @@ function App() {
                 </li>
               ))}
             </ul>
-          </div>
+          </Accordion>
         )}
 
         {suggestions.length > 0 && (
-          <div className="mt-6">
-            <h2 className="text-sm font-semibold mb-2">
-              ✅ ATS Safe Suggestions (Preview)
-            </h2>
-
+          <Accordion
+            title={`✅ ATS Safe Suggestions (Preview) (${suggestions.length})`}
+            isOpen={showSuggestions}
+            onToggle={() => setShowSuggestions((v) => !v)}
+          >
             <ul className="text-xs space-y-2">
               {suggestions.map((s, i) => (
                 <li key={i} className="border rounded p-2 bg-green-50">
@@ -203,9 +298,9 @@ function App() {
                 </li>
               ))}
             </ul>
-          </div>
+          </Accordion>
         )}
-      </div>
+      </main>
     </div>
   );
 }
