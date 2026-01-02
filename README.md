@@ -92,7 +92,23 @@ Score bands:
 - `mammoth` for DOCX parsing
 
 ### Deployment
-- Designed for Cloudflare / modern edge-friendly setups
+- **Frontend:** Vercel (React + Vite)
+- **Backend:** Render (Node.js + Express)
+
+The frontend is deployed as a static Vite build on Vercel.  
+The backend runs on a full Node.js runtime on Render to support reliable PDF and DOCX parsing using `pdfjs-dist` and `mammoth`.
+
+### Notes
+- The backend runs on Render’s free tier and may have a **cold start delay (up to ~50s)** after inactivity.
+- This split deployment was chosen to ensure **correct ATS-style parsing**, which is not well supported in edge or serverless runtimes.
+
+### Environment Variables
+
+The frontend connects to the backend via:
+
+```env
+VITE_API_URL=<backend-url>
+```
 
 ---
 
