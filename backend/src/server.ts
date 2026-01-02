@@ -7,6 +7,7 @@ import { detectLigatures } from "./ligature";
 import { detectTokenIssues, buildSuggestions } from "./tokenIntegrity";
 import { calculateAtsScore } from "./atsScore";
 
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 2 * 1024 * 1024 }, // 2MB

@@ -66,9 +66,10 @@ function App() {
 
     const formData = new FormData();
     formData.append("resume", file);
+    const API_URL = import.meta.env.VITE_API_URL;
 
     try {
-      const res = await fetch("http://localhost:4000/parse", {
+      const res = await fetch(`${API_URL}/parse`, {
         method: "POST",
         body: formData,
       });
