@@ -7,6 +7,13 @@ export type TokenIssue = {
   severity: "low" | "medium" | "high";
 };
 
+export type AtsSuggestion = {
+  original: string;
+  suggestion: string;
+  reason: string;
+  severity: "low" | "medium" | "high";
+};
+
 const URL_PATTERN = /(https?:\/\/[^\s]+)/gi;
 
 export function detectTokenIssues(text: string): TokenIssue[] {
@@ -62,4 +69,38 @@ export function detectTokenIssues(text: string): TokenIssue[] {
   }
 
   return issues;
+}
+
+export function buildSuggestions(
+  glyphIssues: { char: string; description: string; severity: string }[],
+  tokenIssues: {
+    original: string;
+    suggestion: string;
+    description: string;
+    severity: string;
+  }[]
+): AtsSuggestion[] {
+  const suggestions: AtsSuggestion[] = [];
+
+  for (const issue of tokenIssues) {
+    suggestions.push({
+      original: issue.original,
+      suggestion: issue.suggestion,
+      reason: issue.description,
+      severity: issue.severity as any,
+    });
+  }
+
+  for (const issue of glyphIssues) {
+    suggestions.push({
+      original: issue.char,
+      suggestion: issue.char.normalize("NFKD").replace(/[^\x00-\x7F]/g, ""),
+      reason: issue.description,
+      severity: issue.severity as any,
+    });
+  }
+
+  return suggestions.filter(
+    (s) => s.original && s.suggestion && s.original !== s.suggestion
+  );
 }
