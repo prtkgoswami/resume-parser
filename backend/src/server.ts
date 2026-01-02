@@ -1,17 +1,20 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
-import multer from "multer";
+import multer,  { FileFilterCallback } from "multer";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import mammoth from "mammoth";
 import { detectLigatures } from "./ligature";
 import { detectTokenIssues, buildSuggestions } from "./tokenIntegrity";
 import { calculateAtsScore } from "./atsScore";
 
-
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
-  fileFilter: (_req, file, cb) => {
+  fileFilter: (
+    _req: Request,
+    file: Express.Multer.File,
+    cb: FileFilterCallback
+  ) => {
     const allowed = [
       "application/pdf",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -30,11 +33,11 @@ export function createServer() {
   app.use(cors());
   app.use(express.json());
 
-  app.get("/health", (_req, res) => {
+  app.get("/health", (_req: Request, res: Response) => {
     res.json({ status: "ok" });
   });
 
-  app.post("/parse", upload.single("resume"), async (req, res) => {
+  app.post("/parse", upload.single("resume"), async (req: Request, res: Response) => {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
