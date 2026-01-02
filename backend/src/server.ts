@@ -3,6 +3,7 @@ import cors from "cors";
 import multer from "multer";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import mammoth from "mammoth";
+import { detectLigatures } from "./ligature";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -62,10 +63,12 @@ export function createServer() {
         });
         text = result.value;
       }
+      const issues = detectLigatures(text);
 
       return res.json({
         filename: req.file.originalname,
         rawText: text,
+        issues,
       });
     } catch (err) {
       console.error(err);
