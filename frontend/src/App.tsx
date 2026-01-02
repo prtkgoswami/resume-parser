@@ -8,10 +8,20 @@ type Issue = {
   severity: "low" | "medium" | "high";
 };
 
+type TokenIssue = {
+  start: number;
+  end: number;
+  original: string;
+  suggestion: string;
+  description: string;
+  severity: "low" | "medium" | "high";
+};
+
 function App() {
   const [file, setFile] = useState<File | null>(null);
   const [rawText, setRawText] = useState<string>("");
   const [issues, setIssues] = useState<Issue[]>([]);
+  const [tokenIssues, setTokenIssues] = useState<TokenIssue[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -22,6 +32,7 @@ function App() {
     setError(null);
     setRawText("");
     setIssues([]);
+    setTokenIssues([]);
 
     const formData = new FormData();
     formData.append("resume", file);
@@ -39,6 +50,7 @@ function App() {
       const data = await res.json();
       setRawText(data.rawText);
       setIssues(data.issues || []);
+      setTokenIssues(data.tokenIssues || []);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -69,8 +81,8 @@ function App() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-6 rounded shadow w-full max-w-md">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-3">
+      <div className="bg-white p-6 rounded shadow w-full max-w-[80%]">
         <h1 className="text-xl font-semibold mb-4">ATS Resume Parser</h1>
 
         <input
@@ -88,23 +100,48 @@ function App() {
           {loading ? "Uploading..." : "Upload Resume"}
         </button>
 
-        {issues.some((i) => i.severity === "high") && (
-          <div className="mt-4 text-sm text-red-700 font-medium">
-            🚨 Critical ATS issues detected (URLs or keywords may be broken)
-          </div>
-        )}
-        {issues.length > 0 && (
-          <div className="mt-4 text-sm text-red-700">
-            ⚠️ {issues.length} potential ATS-breaking character(s) detected
-          </div>
-        )}
-
         {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
         {rawText && (
           <pre className="mt-6 text-xs bg-gray-100 p-4 rounded max-h-125 overflow-auto whitespace-pre-wrap">
             {highlightedText}
           </pre>
+        )}
+
+        {issues.some((i) => i.severity === "high") && (
+          <div className="mt-4 text-sm text-red-700 font-medium">
+            🚨 Critical ATS issues detected (URLs or keywords may be broken)
+          </div>
+        )}
+
+        {issues.length > 0 && (
+          <div className="mt-4 text-sm text-red-700">
+            ⚠️ {issues.length} potential ATS-breaking character(s) detected
+          </div>
+        )}
+
+        {tokenIssues.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-sm font-semibold mb-2">
+              ⚠️ Token Integrity Issues
+            </h2>
+
+            <ul className="text-xs space-y-2">
+              {tokenIssues.map((issue, i) => (
+                <li key={i} className="border rounded p-2 bg-gray-50">
+                  <div>
+                    <span className="font-semibold">Problem:</span>{" "}
+                    {issue.original}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Suggestion:</span>{" "}
+                    {issue.suggestion}
+                  </div>
+                  <div className="text-gray-600">{issue.description}</div>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     </div>

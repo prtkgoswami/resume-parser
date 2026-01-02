@@ -4,6 +4,8 @@ import multer from "multer";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import mammoth from "mammoth";
 import { detectLigatures } from "./ligature";
+import { detectTokenIssues } from "./tokenIntegrity";
+
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -65,10 +67,13 @@ export function createServer() {
       }
       const issues = detectLigatures(text);
 
+      const tokenIssues = detectTokenIssues(text);
+
       return res.json({
         filename: req.file.originalname,
         rawText: text,
         issues,
+        tokenIssues
       });
     } catch (err) {
       console.error(err);
