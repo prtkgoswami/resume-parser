@@ -17,11 +17,19 @@ type TokenIssue = {
   severity: "low" | "medium" | "high";
 };
 
+type AtsSuggestion = {
+  original: string;
+  suggestion: string;
+  reason: string;
+  severity: "low" | "medium" | "high";
+};
+
 function App() {
   const [file, setFile] = useState<File | null>(null);
   const [rawText, setRawText] = useState<string>("");
   const [issues, setIssues] = useState<Issue[]>([]);
   const [tokenIssues, setTokenIssues] = useState<TokenIssue[]>([]);
+  const [suggestions, setSuggestions] = useState<AtsSuggestion[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -33,6 +41,7 @@ function App() {
     setRawText("");
     setIssues([]);
     setTokenIssues([]);
+    setSuggestions([]);
 
     const formData = new FormData();
     formData.append("resume", file);
@@ -51,6 +60,7 @@ function App() {
       setRawText(data.rawText);
       setIssues(data.issues || []);
       setTokenIssues(data.tokenIssues || []);
+      setSuggestions(data.suggestions || []);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -138,6 +148,30 @@ function App() {
                     {issue.suggestion}
                   </div>
                   <div className="text-gray-600">{issue.description}</div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {suggestions.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-sm font-semibold mb-2">
+              ✅ ATS Safe Suggestions (Preview)
+            </h2>
+
+            <ul className="text-xs space-y-2">
+              {suggestions.map((s, i) => (
+                <li key={i} className="border rounded p-2 bg-green-50">
+                  <div>
+                    <span className="font-semibold">Before:</span>{" "}
+                    <code>{s.original}</code>
+                  </div>
+                  <div>
+                    <span className="font-semibold">After:</span>{" "}
+                    <code>{s.suggestion}</code>
+                  </div>
+                  <div className="text-gray-600">{s.reason}</div>
                 </li>
               ))}
             </ul>
