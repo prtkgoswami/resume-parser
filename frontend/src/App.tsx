@@ -1,8 +1,8 @@
 import { useState } from "react";
 
 function App() {
-  const [file, setFile] = useState<File | null>(null);
-  const [result, setResult] = useState<any>(null);
+   const [file, setFile] = useState<File | null>(null);
+  const [rawText, setRawText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -11,30 +11,30 @@ function App() {
 
     setLoading(true);
     setError(null);
-    setResult(null);
+    setRawText(null);
 
     const formData = new FormData();
     formData.append("resume", file);
 
     try {
-      const res = await fetch("http://localhost:4000/upload", {
+      const res = await fetch("http://localhost:4000/parse", {
         method: "POST",
         body: formData,
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Upload failed");
+        throw new Error("Parsing failed");
       }
 
       const data = await res.json();
-      setResult(data);
+      setRawText(data.rawText);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -62,9 +62,9 @@ function App() {
           <p className="mt-4 text-sm text-red-600">{error}</p>
         )}
 
-        {result && (
-          <pre className="mt-4 text-xs bg-gray-100 p-2 rounded overflow-auto">
-            {JSON.stringify(result, null, 2)}
+        {rawText && (
+          <pre className="mt-6 text-xs bg-gray-100 p-4 rounded max-h-125 overflow-auto whitespace-pre-wrap">
+            {rawText}
           </pre>
         )}
       </div>
