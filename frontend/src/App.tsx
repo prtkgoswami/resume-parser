@@ -47,13 +47,13 @@ function App() {
           type="file"
           accept=".pdf,.docx"
           onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="mb-4"
+          className="mb-4 border border-gray-300 px-2 py-1 cursor-pointer w-full"
         />
 
         <button
           onClick={onSubmit}
           disabled={!file || loading}
-          className="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50"
+          className="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50 cursor-pointer"
         >
           {loading ? "Uploading..." : "Upload Resume"}
         </button>
