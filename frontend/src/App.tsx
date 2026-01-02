@@ -46,8 +46,12 @@ function App() {
   const [atsScore, setAtsScore] = useState<AtsScore | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showTokenIssues, setShowTokenIssues] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showTokenIssues, setShowTokenIssues] = useState(
+    window.innerWidth >= 768
+  );
+  const [showSuggestions, setShowSuggestions] = useState(
+    window.innerWidth >= 768
+  );
 
   const onSubmit = async () => {
     if (!file) return;
@@ -109,9 +113,9 @@ function App() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-3">
+    <div className="min-h-screen bg-gray-100 flex items-start md:items-center justify-center p-3">
       <main
-        className="bg-white p-6 rounded shadow w-full max-w-[80%]"
+        className="bg-white rounded shadow w-full max-w-full md:max-w-[80%] p-4 md:p-6"
         aria-labelledby="app-title"
       >
         <h1 id="app-title" className="text-xl font-semibold mb-4">
@@ -140,7 +144,7 @@ function App() {
           disabled={!file || loading}
           aria-disabled={!file || loading}
           aria-busy={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50 cursor-pointer"
+          className="w-full bg-blue-600 text-white py-3 md:py-2 rounded disabled:opacity-50 cursor-pointer"
         >
           {loading ? "Uploading..." : "Upload Resume"}
         </button>
@@ -184,7 +188,7 @@ function App() {
 
         {rawText && (
           <div
-            className="flex gap-2 mt-4"
+            className="flex flex-row gap-2 mt-4"
             role="tablist"
             aria-label="ATS text view mode"
           >
@@ -192,7 +196,7 @@ function App() {
               role="tab"
               aria-selected={viewMode === "formatted"}
               onClick={() => setViewMode("formatted")}
-              className={`px-3 py-1 text-sm rounded border ${
+              className={`w-full sm:w-auto px-3 py-1 text-sm rounded border ${
                 viewMode === "formatted" ? "bg-blue-600 text-white" : "bg-white"
               }`}
             >
@@ -203,7 +207,7 @@ function App() {
               role="tab"
               aria-selected={viewMode === "raw"}
               onClick={() => setViewMode("raw")}
-              className={`px-3 py-1 text-sm rounded border ${
+              className={`w-full sm:w-auto px-3 py-1 text-sm rounded border ${
                 viewMode === "raw" ? "bg-blue-600 text-white" : "bg-white"
               }`}
             >
@@ -214,7 +218,7 @@ function App() {
 
         {rawText && viewMode === "raw" && (
           <pre
-            className="mt-4 text-xs bg-gray-100 p-4 rounded max-h-125 overflow-auto whitespace-pre-wrap"
+            className="mt-4 text-xs bg-gray-100 p-3 md:p-4 rounded max-h-[60vh] md:max-h-125 overflow-auto whitespace-pre-wrap"
             aria-label="Raw ATS extracted text"
           >
             {highlightedText}
@@ -222,7 +226,7 @@ function App() {
         )}
 
         {rawText && viewMode === "formatted" && (
-          <div className="mt-4 space-y-3 text-sm bg-gray-100 p-4 rounded">
+          <div className="mt-4 space-y-3 text-sm bg-gray-100 p-3 md:p-4 rounded">
             {formatAtsText(rawText).map((block, i) => {
               if (block.type === "section") {
                 return (
